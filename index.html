@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ambulatorio Osteometabolico – Referti</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+/* Layout: schede colorate per sezione a sinistra, foglio del referto a destra (su schermi larghi) */
+:root{
+  --bg:#f3f5f8; --bg-top:#e6edf6; --card:#ffffff; --fg:#13243b; --muted:#5f6f82; --line:#eef1f5;
+  --chip:#f4f6f9; --chip-line:#e2e7ee; --on:#ffffff; --ink:#13243b; --ink-fg:#ffffff; --warn:#a4561c;
+  --c1:#2f7d7a; --c2:#3d5aa8; --c3:#c07a2c;
+  --shadow:0 1px 2px rgba(19,36,59,.05),0 10px 28px rgba(19,36,59,.07);
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --bg-top:#152031; --card:#18202b; --fg:#e4eaf1; --muted:#92a0b0; --line:#253040;
+  --chip:#1f2935; --chip-line:#2e3a4a; --on:#0f1a26; --ink:#e4eaf1; --ink-fg:#13243b; --warn:#e8a866;
+  --c1:#5fb3ae; --c2:#8aa4ec; --c3:#e0a35e; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --bg-top:#152031; --card:#18202b; --fg:#e4eaf1; --muted:#92a0b0; --line:#253040;
+  --chip:#1f2935; --chip-line:#2e3a4a; --on:#0f1a26; --ink:#e4eaf1; --ink-fg:#13243b; --warn:#e8a866;
+  --c1:#5fb3ae; --c2:#8aa4ec; --c3:#e0a35e; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.3); color-scheme:dark}
+body{background:linear-gradient(180deg,var(--bg-top) 0,var(--bg) 420px) var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;min-height:100vh}
+[hidden]{display:none!important}
+.wrap{max-width:460px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:20px}
+.cols{display:flex;flex-direction:column;gap:22px}
+.ey{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--c2);display:flex;align-items:center;gap:10px}
+.ey::after{content:"";height:1px;width:48px;background:var(--c2);opacity:.5}
+h1{font:600 34px/1.1 var(--serif);letter-spacing:-.015em;margin:6px 0 0;text-wrap:balance}
+.tags{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:6px 18px 8px;--sc:var(--c1)}
+.card.c2{--sc:var(--c2)}.card.c3{--sc:var(--c3)}
+.sec{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;padding:12px 0 6px}
+.ic{width:30px;height:30px;border-radius:50%;background:var(--sc);color:var(--on);display:grid;place-items:center;flex:none}
+.ic svg{width:16px;height:16px}
+.g{display:grid;grid-template-columns:88px 1fr;align-items:start;gap:4px 10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.card .g:last-child{border-bottom:0}
+.g>*{min-width:0}
+.lab{font-size:12.5px;font-weight:500;color:var(--muted);padding-top:5px}
+.g .warn{grid-column:2}
+.row{display:flex;flex-wrap:wrap;gap:5px}
+button.c{font:inherit;font-size:12.5px;padding:4px 12px;border-radius:999px;border:1px solid var(--chip-line);
+  background:var(--chip);color:var(--fg);cursor:pointer}
+button.c[aria-pressed="true"]{background:var(--sc);border-color:var(--sc);color:var(--on)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--sc,var(--ink));outline-offset:2px}
+input[type=text]{font:inherit;font-size:12.5px;padding:5px 12px;border:1px solid var(--chip-line);border-radius:999px;
+  background:var(--chip);color:var(--fg);width:100%;box-sizing:border-box}
+input::placeholder{color:var(--muted)}
+.warn{font-size:12px;color:var(--warn)}
+.hint{font-size:12px;color:var(--muted);padding-top:5px}
+.g.sub .lab{padding-left:10px;border-left:2px solid var(--chip-line)}
+.tx.off{opacity:.38}.tx.off button,.tx.off input{cursor:not-allowed}
+.pair{display:flex;gap:6px}.pair input{flex:1;min-width:0}
+/* foglio */
+.paper{background:var(--card);border-radius:16px;box-shadow:var(--shadow);
+  padding:22px 26px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+textarea{font-family:var(--serif);font-size:14.5px;line-height:1.6;width:100%;box-sizing:border-box;min-height:380px;
+  padding:4px 0;border:0;background:transparent;color:var(--fg);resize:vertical}
+textarea:focus-visible{outline-offset:6px}
+.sig{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted);text-align:right}
+.bar{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+.bar .sp{flex:1;font-size:12px;color:var(--muted)}
+.btn{font:inherit;font-size:13px;font-weight:500;padding:7px 16px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--chip-line);background:var(--card);color:var(--fg)}
+.btn.p{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
+@media (max-width:480px){.paper{padding:18px 16px 14px}.card{padding:4px 14px 6px}.g{grid-template-columns:76px 1fr}}
+@media (min-width:900px){
+  .wrap{max-width:1040px}
+  .cols{display:grid;grid-template-columns:460px minmax(0,1fr);gap:28px;align-items:start}
+  .paper{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+  .paper textarea{height:calc(100vh - 190px);min-height:300px;resize:none}
+}
+</style>
+<style>body{margin:0}*,*::before,*::after{box-sizing:border-box}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header><div class="ey">Referti</div>
+  <h1>Ambulatorio Osteometabolico</h1></header>
+
+  <div class="cols">
+  <div class="tags">
+  <section class="card c1">
+  <div class="sec"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg></span>Inquadramento</div>
+  <div class="g"><div class="lab">Paziente</div>
+    <div class="row" data-one="sesso">
+      <button class="c" id="s-f" data-v="F">Donna</button>
+      <button class="c" id="s-m" data-v="M">Uomo</button>
+    </div></div>
+
+  <div class="g"><div class="lab">Contesto</div>
+    <div class="row">
+      <button class="c" id="t-onco" data-t="onco">Oncologia</button>
+      <button class="c" id="t-aclOggi" data-t="aclOggi">Aclasta oggi</button>
+    </div></div>
+
+  <div class="g" id="g-dxa" hidden><div class="lab">DXA</div>
+    <div class="row" data-one="dxa">
+      <button class="c" id="d-0" data-v="">Non spec.</button>
+      <button class="c" id="d-n" data-v="norma">Nella norma</button>
+      <button class="c" id="d-p" data-v="osteopenia">Osteopenia</button>
+      <button class="c" id="d-o" data-v="osteoporosi">Osteoporosi</button>
+    </div></div>
+
+  <div class="g" id="g-inf" hidden><div class="lab">Infusione n.</div>
+    <div class="row" data-one="inf">
+      <button class="c" id="i-1" data-v="1">1ª</button>
+      <button class="c" id="i-2" data-v="2">2ª</button>
+      <button class="c" id="i-3" data-v="3">3ª (ultima)</button>
+    </div></div>
+
+  <div class="g" id="g-nome" hidden><div class="lab">Cognome nome</div>
+    <input type="text" id="nome" placeholder="es. ROSSI MARIA" autocomplete="off" style="text-transform:uppercase"></div>
+
+  <div class="g"><div class="lab">Quadro</div>
+    <input type="text" id="quadro" placeholder="es. osteoporosi (T-score -3.8 lombare)"></div>
+
+  <div class="g"><div class="lab">Note</div>
+    <div class="row">
+      <button class="c" id="t-artrosi" data-t="artrosi">Artrosi</button>
+      <button class="c" id="t-lp" data-t="lp">Libera professione</button>
+    </div></div>
+
+  </section>
+  <section class="card c2">
+  <div class="sec"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span>Terapia</div>
+  <div class="g tx"><div class="lab">Farmaco</div>
+    <div class="row" id="ter">
+      <button class="c" id="r-deno" data-v="deno">Denosumab</button>
+      <button class="c" id="r-aln" data-v="aln">Alendronato</button>
+      <button class="c" id="r-acl" data-v="acl">Aclasta</button>
+      <button class="c" id="r-romo" data-v="romo">Romosozumab</button>
+      <button class="c" id="r-teri" data-v="teri">Teriparatide</button>
+    </div>
+    <div class="warn" id="w-romo" hidden>Romosozumab è indicato solo nella donna in postmenopausa.</div>
+    <div class="warn" id="w-teri" hidden>Teriparatide: controindicato in caso di metastasi scheletriche o pregressa radioterapia sullo scheletro.</div></div>
+
+  <div class="g tx"><div class="lab">Vitamina D</div>
+    <div class="row" data-one="vitd">
+      <button class="c" id="v-0" data-v="">—</button>
+      <button class="c" id="v-m" data-v="mant">Mantenere</button>
+      <button class="c" id="v-p" data-v="pot">Potenziare</button>
+      <button class="c" id="v-r" data-v="rx">Prescrivi</button>
+    </div></div>
+
+  <div class="g sub tx" id="g-vprod" hidden><div class="lab">Prodotto</div>
+    <div class="row" data-one="vprod">
+      <button class="c" id="vp-df" data-v="dibasefl">Dibase fl</button>
+      <button class="c" id="vp-dg" data-v="dibasegtt">Dibase gtt</button>
+      <button class="c" id="vp-di" data-v="ditralia">Ditralia</button>
+      <button class="c" id="vp-no" data-v="nodigap">Nodigap</button>
+      <button class="c" id="vp-ne" data-v="neodidro">Neodidro</button>
+    </div></div>
+
+  <div class="g sub tx" id="g-vdose" hidden><div class="lab">Dose</div>
+    <div class="pair">
+      <input type="text" id="vdose" list="vdose-list" placeholder="dosaggio, es. 25.000 UI" aria-label="Dosaggio">
+      <input type="text" id="vqty" placeholder="quantità, es. 1 fl" aria-label="Quantità">
+      <datalist id="vdose-list"></datalist>
+    </div></div>
+
+  <div class="g sub tx" id="g-vfreq" hidden><div class="lab">Frequenza</div>
+    <div class="row" data-one="vfreq">
+      <button class="c" id="vf-d" data-v="al giorno">al giorno</button>
+      <button class="c" id="vf-s" data-v="a settimana">a settimana</button>
+      <button class="c" id="vf-2" data-v="ogni 2 settimane">ogni 2 sett.</button>
+      <button class="c" id="vf-m" data-v="al mese">al mese</button>
+      <button class="c" id="t-n96" data-t="n96">Nota 96</button>
+    </div></div>
+
+  <div class="g tx"><div class="lab">Extra</div>
+    <div class="row">
+      <button class="c" id="t-odonto" data-t="odonto">Odontoiatria</button>
+      <button class="c" id="t-obod" data-t="obod">Nota Obodence</button>
+      <button class="c" id="t-terrosa" data-t="terrosa">Nota Terrosa</button>
+      <span class="hint" id="x-hint">Compaiono dopo aver scelto un farmaco.</span>
+    </div></div>
+
+  </section>
+  <section class="card c3">
+  <div class="sec"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Follow-up</div>
+  <div class="g"><div class="lab">Controlli</div>
+    <div class="row">
+      <button class="c" id="t-dexa" data-t="dexa">DXA a 2 anni</button>
+      <button class="c" id="t-esami" data-t="esami">Esami metabolismo</button>
+    </div></div>
+  </section>
+  </div>
+
+  <div class="paper">
+  <textarea id="out" spellcheck="false" aria-label="Conclusioni generate"></textarea>
+  <div class="sig">Dr. Aurelio Guarnaccia</div>
+  <div class="bar">
+    <span class="sp" id="msg">Puoi scrivere nel testo: le aggiunte restano quando cambi i tag.</span>
+    <button class="btn" id="reset">Azzera</button>
+    <button class="btn p" id="copy">Copia</button>
+  </div>
+  </div>
+  </div>
+</div>
+
+<script>
+const MSG0 = "Puoi scrivere nel testo: le aggiunte restano quando cambi i tag.";
+let lastGen = null; // ultimo testo generato, per riconoscere le modifiche a mano
+const DEF = {sesso:'F', dxa:'', inf:'1', vitd:'', vprod:'', vfreq:'a settimana', n96:true, onco:false, aclOggi:false, artrosi:false, lp:false,
+  odonto:true, dexa:true, esami:false, obod:false, terrosa:false};
+let S = {...DEF, ter:[]};
+
+document.querySelectorAll('#ter button').forEach(b=>b.onclick=()=>{
+  const v=b.dataset.v; S.ter = S.ter.includes(v) ? S.ter.filter(x=>x!==v) : [...S.ter, v]; render();});
+document.querySelectorAll('[data-one]').forEach(r=>{
+  r.querySelectorAll('button').forEach(b=>b.onclick=()=>{S[r.dataset.one]=b.dataset.v; render();});
+});
+const ESCLUSIVI = {onco:'aclOggi', aclOggi:'onco'}; // Oncologia e Aclasta oggi si escludono
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+  const t=b.dataset.t; S[t]=!S[t];
+  if(S[t] && ESCLUSIVI[t]) S[ESCLUSIVI[t]] = false;
+  render();});
+document.getElementById('quadro').oninput=render;
+document.getElementById('vdose').oninput=render;
+document.getElementById('nome').oninput=render;
+document.getElementById('vqty').oninput=render;
+const VD = { // nome nel testo, dosaggi suggeriti, quantità di partenza
+  dibasefl:{nome:'Dibase', dosi:['25.000 UI','50.000 UI','100.000 UI'], q:'1 fl'},
+  dibasegtt:{nome:'Dibase gtt', dosi:['10.000 UI/ml'], q:''},
+  ditralia:{nome:'Ditralia', dosi:['25.000 UI','50.000 UI'], q:'1 cp'},
+  nodigap:{nome:'Nodigap', dosi:[], q:''},
+  neodidro:{nome:'Neodidro', dosi:['0,266 mg'], q:'1 cps'}
+};
+document.querySelectorAll('[data-one="vprod"] button').forEach(b=>b.addEventListener('click',()=>{
+  const d=VD[b.dataset.v], dose=document.getElementById('vdose'), qty=document.getElementById('vqty');
+  dose.value = d.dosi[0]||''; qty.value = d.q;
+  document.getElementById('vdose-list').innerHTML = d.dosi.map(x=>`<option value="${x}">`).join('');
+  render();
+}));
+document.getElementById('reset').onclick=()=>{S={...DEF, ter:[]}; document.getElementById('quadro').value=''; document.getElementById('nome').value=''; document.getElementById('vdose').value=''; document.getElementById('vqty').value=''; lastGen=null; render();};
+document.getElementById('copy').onclick=()=>{
+  const t=document.getElementById('out'), m=document.getElementById('msg');
+  const ok=()=>{m.textContent='Copiato.'; setTimeout(()=>m.textContent=MSG0,1800);};
+  try{ navigator.clipboard.writeText(t.value).then(ok,()=>{t.select(); m.textContent='Testo selezionato: premi Ctrl+C.';}); }
+  catch(e){ t.select(); m.textContent='Testo selezionato: premi Ctrl+C.'; }
+};
+
+function build(){
+  const F = S.sesso==='F', g=(f,m)=>F?f:m;
+  const la = g('la paziente','il paziente'), della = g('della paziente','del paziente');
+  const out = [];
+
+  /* Lettera infusione Aclasta */
+  if(S.aclOggi){
+    const n=S.inf;
+    const nome=document.getElementById('nome').value.trim().replace(/\s+/g,' ').toUpperCase();
+    let L = `Egregio Collega,\n\nIn data odierna ${g('la Sig.ra','il Sig.')}${nome ? ' '+nome : ''} ha eseguito, come da programma terapeutico, ${['I','II','III'][+n-1]} infusione endovenosa lenta di acido zoledronico (Aclasta) alla dose di 5 mg.\n\nCome già illustrato, nei giorni successivi all’infusione potrebbe comparire una sintomatologia transitoria caratterizzata da dolori osteo-muscolari diffusi, malessere generale e febbricola o febbre, con un quadro clinico simil-influenzale. Tale reazione, generalmente autolimitante, è gestibile con terapia sintomatica a base di paracetamolo. È stata inoltre somministrata integrazione orale con calcio carbonato (pari a 1 grammo di calcio elementare) prima dell’infusione; nei due giorni successivi consigliamo di potenziare l'assunzione di calcio alimentare (per es. con formaggi stagionati), per prevenire l’eventuale comparsa di ipocalcemia, evenienza possibile nei 3–4 giorni post-trattamento, solitamente lieve e asintomatica. Infine, si sottolinea l’importanza di un’adeguata idratazione nei 2–3 giorni successivi alla somministrazione, suggerendo l’assunzione di almeno 1,5 litri di acqua al giorno.\n\n`;
+    if(n==='3') L += `Con l'infusione odierna si conclude il ciclo terapeutico programmato. Eseguire una densitometria ossea di controllo a distanza di 2 anni.`;
+    else L += `Programmeremo una ${n==='1'?'seconda':'terza'} infusione di Aclasta il prossimo anno, contatteremo più avanti ${la} telefonicamente per comunicare la data della nuova infusione.\nEseguire un controllo di esami del metabolismo minerale (vit. D, calcemia, PTH, CTX, creatinina) tra circa 8-10 mesi, da far visionare al Curante.`;
+    out.push(L);
+  }
+
+  /* Inquadramento */
+  const q = document.getElementById('quadro').value.trim();
+  let intro = '';
+  if(S.onco){
+    intro = F
+      ? `Paziente inviata dai Colleghi dell'Oncologia per valutazione osteometabolica in quadro di Ca. mammella in terapia con inibitore dell'aromatasi.`
+      : `Paziente inviato dai Colleghi dell'Oncologia per valutazione osteometabolica in quadro di Ca. prostata in terapia di deprivazione androgenica.`;
+    const nota = `criterio sufficiente per l'inclusione ${della} in Nota AIFA 79 ai fini della prescrizione di una terapia di protezione ossea in prevenzione primaria delle fratture.`;
+    // categoria: dal tag DXA, altrimenti dedotta dal testo del Quadro
+    const cat = S.dxa || (/osteoporo/i.test(q)?'osteoporosi':/osteopeni/i.test(q)?'osteopenia':/norma/i.test(q)?'norma':'');
+    const dx = q ? `Alla valutazione densitometrica quadro di ${q.replace(/\.$/,'')}.`
+      : {norma:'Quadro densitometrico nella norma.', osteopenia:'Alla valutazione densitometrica quadro di osteopenia.', osteoporosi:'Alla valutazione densitometrica quadro di osteoporosi.'}[cat] || '';
+    if(dx) intro += ' ' + dx;
+    if(cat==='norma') intro += `\nLa terapia ormonale in atto rappresenta tuttavia un ${nota}`;
+    else if(cat==='osteopenia') intro += `\nTuttavia, la terapia ormonale in atto rappresenta di per sé un ${nota}`;
+    else if(cat==='osteoporosi') intro += `\nIl quadro densitometrico, unitamente alla terapia ormonale in atto, rappresenta un ${nota}`;
+    else intro += `\nLa terapia ormonale in atto rappresenta già di per sé un ${nota}`;
+  } else if(q){
+    intro = `Valutazione osteometabolica in paziente con ${q}${/[.]$/.test(q)?'':'.'}`;
+  }
+  if(S.artrosi) intro += (intro?'\n':'') + `I valori al rachide potrebbero essere in parte sovrastimati per la concomitante presenza di alterazioni artrosico-degenerative.`;
+  if(intro) out.push(intro);
+
+  /* Terapia */
+  const has=k=>S.ter.includes(k);
+  const anti=['deno','aln','acl'].filter(has), anab=['teri','romo'].filter(has);
+  const NOME={deno:'denosumab',aln:'alendronato',acl:'Aclasta'};
+  const poi = anti.length ? `si proseguirà con il solo ${anti.map(k=>NOME[k]).join(' / ')}.` : `sarà necessario proseguire con terapia antiriassorbitiva (denosumab o bifosfonato) per consolidare il guadagno densitometrico ottenuto.`;
+  let T = '';
+  if(S.ter.length && !S.aclOggi){
+    const D = [];
+    if(has('deno')){
+      let t = `- Denosumab 60 mg 1 fl sc ogni 6 mesi, previa valutazione odontoiatrica. Ricordo l'importanza di continuare ad assumere la terapia per evitare l'effetto rebound: alla sospensione del farmaco, si verifica infatti un rapido incremento dell’attività osteoclastica, con accelerata perdita di massa ossea. È quindi raccomandato non interrompere la terapia senza comunicarcelo, perché l'uscita dal denosumab prevede una flebo di zoledronato 5 mg (Aclasta), un bifosfonato iniettivo.`;
+      if(S.onco) t += `\nLa terapia, se ben tollerata, è da intendersi per tutta la durata della terapia ormonale, in seguito alla quale dovremo programmare l'uscita con 1 singola flebo di Aclasta.`;
+      if(S.obod) t += `\nIl farmaco potrà comparire con la denominazione commerciale “Obodence”, ma si tratta sempre di denosumab, equivalente a Prolia.`;
+      D.push(t);
+    }
+    if(has('aln')){
+      D.push(`- Alendronato 70 mg 1 cp a settimana da assumere a stomaco vuoto la mattina con un bicchiere pieno d'acqua, evitando di sdraiarsi nella mezz'ora successiva all'assunzione e ritardando la colazione ed altre eventuali terapie. Qualora insorgessero sintomi dispeptici (gastrite, bruciore) si potrà tentare passaggio a:\n- Actonel 35 mg 1 cp gastroresistente a settimana, da assumere con la modalità di cui sopra.\n` + (S.onco
+        ? `La terapia, se ben tollerata, è da intendersi per tutta la durata della terapia ormonale. Poi potrà sospenderla.`
+        : `La terapia è da intendersi per 5 anni se stabilità densitometrica o miglioramento densitometrico, con successiva sospensione di 2 anni.`));
+    }
+    if(has('acl')) D.push(`- Aclasta 5 mg ev annuale con ciclo di 3 anni. Contatteremo ${la} per comunicare la data dell'infusione.`);
+    if(has('teri')){
+      let t = `- Teriparatide 20 mcg 1 fl sc al giorno per 24 mesi (in Nota AIFA 79).\nAl termine dei 24 mesi di teriparatide ${poi}`;
+      if(S.terrosa) t += `\nTerrosa: contattare il numero verde 800.199.347 dal lunedì al venerdì dalle 9.00 alle 18.00 chiedendo fornitura aghi e training domiciliare.`;
+      D.push(t);
+    }
+    if(has('romo')) D.push(`- Romosozumab 210 mg sc (2 iniezioni da 105 mg) 1 volta al mese per 12 mesi, previa valutazione odontoiatrica. Prima dell'inizio utile verificare un adeguato dosaggio di vitamina D e l'assenza di ipocalcemia.\nAl termine dei 12 mesi di romosozumab ${poi}`);
+    const comb = anti.length && anab.length;
+    T = S.onco ? `Consiglio pertanto${comb?' terapia combinata (anabolico + antiriassorbitivo)':''}:\n`
+               : `Si consiglia, come strategia di riduzione del rischio fratturativo, terapia ${comb?'combinata (anabolico + antiriassorbitivo) ':''}con:\n`;
+    T += D.join('\n');
+  }
+  /* Vitamina D */
+  const rx = S.vprod ? [VD[S.vprod].nome, document.getElementById('vdose').value.trim(), document.getElementById('vqty').value.trim(), S.vfreq]
+    .filter(Boolean).join(' ').replace(/\s+/g,' ') : '';
+  const n96 = S.n96 ? ' (in Nota AIFA 96)' : '';
+  let V = {
+    mant:`Mantenga l'attuale dosaggio di integrazione di vitamina D.`,
+    pot: rx ? `A latere: utile potenziare il dosaggio della vitamina D, per esempio con ${rx}${n96}.` : `A latere: utile potenziare il dosaggio della vitamina D.`,
+    rx: rx ? `- ${rx}${n96}.` : ''
+  }[S.vitd];
+  if(S.aclOggi) V = '';
+  if(V) T += (T?'\n':'') + V;
+  if(T) out.push(T);
+
+  /* Odontoiatria */
+  if(S.odonto && !S.aclOggi){
+    if(has('deno')) out.push(`Qualora necessari interventi odontoiatrici maggiori in corso di terapia, utile:\n- Eseguire l'intervento a circa 5-6 mesi dall'ultima somministrazione, rimandando la successiva una volta ottenuta la completa guarigione dei tessuti mucosi\n- Eseguire terapia antibiotica 3 giorni prima e 3 giorni dopo l'intervento (per es. Augmentin 1 gr x 3/die)`);
+    if(has('aln')||has('acl')) out.push(`Utile una valutazione odontoiatrica preventiva con OPT per ridurre al minimo possibile il rischio di osteonecrosi (ONJ). Qualora necessari interventi odontoiatrici maggiori in corso di terapia, utile:\n- Sospendere il farmaco 1 mese prima dell'intervento\n- Eseguire terapia antibiotica 3 giorni prima e 4 giorni dopo l'intervento (per es. Augmentin 1 gr x 3/die)\n- Riprendere la terapia solo una volta guarito completamente`);
+    else if(has('romo') && !has('deno')) out.push(`Utile una valutazione odontoiatrica preventiva con OPT per ridurre al minimo possibile il rischio di osteonecrosi (ONJ).`);
+  }
+
+  /* Controlli */
+  const C = [];
+  if(S.dexa && !(S.aclOggi && S.inf==='3')) C.push(`Eseguire una densitometria ossea di controllo a distanza di 2 anni.`);
+  if(S.esami) C.push(`Si raccomanda di eseguire annualmente esami completi del metabolismo minerale: VES, emocromo, proteine totali + elettroforesi proteica, calcemia + albumina, fosforemia, ALP totale, creatininemia, calciuria urine 24h, PTH e vitamina D 25OH.`);
+  if(C.length) out.push(C.join('\n'));
+
+  if(S.lp) out.push(`Si segnala che la presente valutazione è stata effettuata in regime di libera professione; non è pertanto possibile effettuare prescrizioni SSN nell'ambito del presente accesso.`);
+
+  return out.join('\n\n');
+}
+
+/* Riporta le modifiche a mano (righe aggiunte, cambiate o cancellate) sul nuovo testo generato.
+   Ogni blocco aggiunto resta agganciato alla riga generata che lo precedeva. */
+function merge(oldGen, edited, newGen){
+  const A = oldGen.split('\n'), B = edited.split('\n'), n=A.length, m=B.length;
+  const L = Array.from({length:n+1},()=>new Int16Array(m+1));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j] = A[i]===B[j] ? L[i+1][j+1]+1 : Math.max(L[i+1][j], L[i][j+1]);
+  const blocks=[], deleted=[]; let anchors=[], cur=null, i=0, j=0;
+  const pushA = t=>{ if(t.trim()) anchors=[t, ...anchors]; };
+  while(i<n || j<m){
+    if(i<n && j<m && A[i]===B[j]){ cur=null; pushA(A[i]); i++; j++; }
+    else if(j<m && (i>=n || L[i][j+1]>=L[i+1][j])){ if(!cur){ cur={anchors:anchors.slice(), lines:[], tail:i>=n}; blocks.push(cur);} cur.lines.push(B[j]); j++; }
+    else { if(A[i].trim()) deleted.push(A[i]); pushA(A[i]); i++; }
+  }
+  const items = newGen.split('\n').map(t=>({t, gen:true}));
+  for(const bl of blocks){
+    if(bl.tail){ items.push(...bl.lines.map(t=>({t, gen:false}))); continue; }
+    let pos = -1;
+    if(!bl.anchors.length) pos = -1;
+    else { for(const an of bl.anchors){ const k = items.findIndex(x=>x.gen && x.t===an); if(k>=0){ pos=k; break; } } if(pos<0) pos = items.length-1; }
+    let at = pos+1; while(at<items.length && !items[at].gen) at++;
+    items.splice(at, 0, ...bl.lines.map(t=>({t, gen:false})));
+  }
+  for(const d of deleted){ const k = items.findIndex(x=>x.gen && x.t===d); if(k>=0) items.splice(k,1); }
+  return items.map(x=>x.t).join('\n');
+}
+
+function render(){
+  document.querySelectorAll('[data-one]').forEach(r=>r.querySelectorAll('button').forEach(b=>
+    b.setAttribute('aria-pressed', String(S[r.dataset.one]===b.dataset.v))));
+  document.querySelectorAll('[data-t]').forEach(b=>b.setAttribute('aria-pressed', String(!!S[b.dataset.t])));
+  document.getElementById('g-dxa').hidden = !S.onco;
+  document.getElementById('g-inf').hidden = !S.aclOggi;
+  document.getElementById('g-nome').hidden = !S.aclOggi;
+  document.querySelectorAll('#ter button').forEach(b=>b.setAttribute('aria-pressed', String(S.ter.includes(b.dataset.v))));
+  const hasDeno = S.ter.includes('deno'), hasTeri = S.ter.includes('teri');
+  document.getElementById('w-romo').hidden = !(S.ter.includes('romo') && S.sesso==='M');
+  document.getElementById('t-obod').hidden = !hasDeno;
+  document.getElementById('t-terrosa').hidden = !hasTeri;
+  document.getElementById('t-odonto').hidden = !S.ter.some(k=>k!=='teri');
+  document.getElementById('x-hint').hidden = S.ter.length>0;
+  document.getElementById('w-teri').hidden = !(hasTeri && S.onco);
+  document.querySelectorAll('.tx').forEach(el=>el.classList.toggle('off', S.aclOggi));
+  document.querySelectorAll('.tx button, .tx input').forEach(el=>el.disabled = S.aclOggi);
+  if(S.aclOggi){ document.getElementById('w-romo').hidden = true; document.getElementById('w-teri').hidden = true; }
+  const vx = S.vitd==='pot' || S.vitd==='rx';
+  document.getElementById('g-vprod').hidden = !vx;
+  document.getElementById('g-vdose').hidden = !(vx && S.vprod);
+  document.getElementById('g-vfreq').hidden = !(vx && S.vprod);
+  const ta = document.getElementById('out');
+  const gen = build() || 'Seleziona i tag per costruire le conclusioni.';
+  ta.value = (lastGen===null || ta.value===lastGen) ? gen : merge(lastGen, ta.value, gen);
+  lastGen = gen;
+}
+render();
+</script>
+</body>
+</html>
